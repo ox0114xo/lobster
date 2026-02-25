@@ -1,25 +1,24 @@
-from http.server import BaseHTTPRequestHandler
-import requests
-import json
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
-# 填入你的 GitHub Token (需有 gist 權限) 和 GIST_ID
-GITHUB_TOKEN = "你的_GITHUB_TOKEN"
-GIST_ID = "你的_GIST_ID"
+  const { status } = req.body;
+  const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // 記得在 Vercel 設定環境變數
+  const GIST_ID = "94acdb8bea0ceb153a79fce5422f9a21";
 
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        signal = json.loads(post_data).get('status') # 'ON' 或 'OFF'
+  const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `token ${GITHUB_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      files: { 'signal.txt': { content: status } }
+    }),
+  });
 
-        url = f"https://api.github.com/gists/{GIST_ID}"
-        headers = {"Authorization": f"token {GITHUB_TOKEN}"}
-        payload = {"files": {"signal.txt": {"content": signal}}}
-        
-        r = requests.patch(url, headers=headers, json=payload)
-        
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-        self.wfile.write(json.dumps({"result": "success"}).encode())
-
+  if (response.ok) {
+    res.status(200).json({ success: true });
+  } else {
+    res.status(500).json({ success: false });
+  }
+}
