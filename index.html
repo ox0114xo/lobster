@@ -1,0 +1,13 @@
+<button onclick="sendSignal('ON')" style="background:green; color:white; padding:20px;">啟動外掛</button>
+<button onclick="sendSignal('OFF')" style="background:red; color:white; padding:20px;">停止點擊</button>
+
+<script>
+async function sendSignal(status) {
+    await fetch('/api/toggle', {
+        method: 'POST',
+        body: JSON.stringify({ status: status })
+    });
+    alert('訊號已發送：' + status);
+}
+</script>
+
